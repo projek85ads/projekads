@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow">
+<title>Admin – Cloud Advertising</title>
+<link rel="icon" type="image/svg+xml" href="brand/favicon.svg">
+<style>
+:root{--bg:#fffaf0;--surface:#fff;--ink:#1b1710;--muted:#5d5648;--line:#eadfc6;--brand:#fdb717;--soft:#fff1cc;--wa:#128c4a;--wa-ink:#fff;--err:#c0392b;color-scheme:light}
+@media (prefers-color-scheme:dark){:root{--bg:#14110b;--surface:#1f1b12;--ink:#f6efdd;--muted:#b9ae94;--line:#3a3322;--soft:#2b2410;--wa:#2bbd6a;--wa-ink:#06260f;--err:#ff8a7a;color-scheme:dark}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:400 16px/1.55 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;padding:env(safe-area-inset-top,0px) 0 env(safe-area-inset-bottom,0px)}
+.wrap{max-width:1100px;margin:0 auto;padding:24px 20px 60px}
+h1{font-size:1.6rem;margin:0 0 4px;letter-spacing:-.02em}
+h2{font-size:1.15rem;margin:28px 0 8px}
+.muted{color:var(--muted);margin:0 0 18px}
+.box{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:20px}
+label{display:block;font-weight:600;margin-bottom:6px}
+input,select{padding:11px 12px;border-radius:10px;border:2px solid var(--line);background:var(--bg);color:var(--ink);font:inherit;max-width:230px;width:100%}
+.btn{font:inherit;font-weight:600;padding:10px 18px;border-radius:10px;border:2px solid var(--ink);background:transparent;color:var(--ink);cursor:pointer}
+.btn:hover{background:var(--ink);color:var(--bg)}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.btn.go{background:var(--wa);border-color:var(--wa);color:var(--wa-ink)}
+.btn.sm{padding:4px 10px;font-size:.82rem;border-radius:8px;margin-right:6px}
+.err{color:var(--err);min-height:1.4em;font-weight:600;margin:8px 0}
+.row{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.tbl{overflow-x:auto}
+table{width:100%;border-collapse:collapse;min-width:720px;font-size:.9rem}
+th,td{text-align:left;padding:9px 8px;border-bottom:1px solid var(--line);vertical-align:top}
+.sum{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:16px 0}
+.sum div{background:var(--soft);border-radius:12px;padding:14px}
+.sum b{display:block;font-size:1.4rem}
+.sum span{font-size:.85rem;color:var(--muted)}
+[hidden]{display:none!important}
+@media (max-width:700px){.sum{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Admin Affiliate</h1>
+  <p class="muted">Cloud Advertising. Halaman ini tidak dipaparkan dalam carian Google.</p>
+
+  <div class="box" id="login">
+    <label for="key">Kunci admin</label>
+    <div class="row"><input id="key" type="password" autocomplete="off"><button class="btn go" id="go" type="button">Masuk</button></div>
+    <p class="err" id="err" role="alert"></p>
+  </div>
+
+  <div id="panel" hidden>
+    <div class="row" style="justify-content:space-between">
+      <div class="sum" style="flex:1;margin:0">
+        <div><b id="s1">0</b><span>Jumlah affiliate</span></div>
+        <div><b id="s2">0</b><span>Menunggu kelulusan</span></div>
+        <div><b id="s3">RM0.00</b><span>Komisen belum dibayar</span></div>
+      </div>
+    </div>
+    <h2>Senarai affiliate</h2>
+    <div class="tbl" id="affs"></div>
+
+    <h2>Rekod jualan disahkan</h2>
+    <div class="row">
+      <select id="scode" aria-label="Affiliate"></select>
+      <select id="sprod" aria-label="Produk"></select>
+      <input id="samt" type="number" min="0" step="0.01" placeholder="Jumlah (RM)">
+      <input id="snote" type="text" maxlength="60" placeholder="Nota (pilihan)">
+      <button class="btn go" id="sgo" type="button">Rekod jualan</button>
+    </div>
+    <p class="err" id="serr" role="alert"></p>
+
+    <h2>Senarai jualan</h2>
+    <div class="tbl" id="sales"></div>
+
+    <p style="margin-top:28px"><button class="btn" id="out" type="button">Log keluar</button></p>
+  </div>
+</div>
+
+<script>
+(function(){
+  var API="https://script.google.com/macros/s/AKfycbxt1Luz9tv70QZFOVnEMngdVOnwUSsk9JKhUfPhyjVW_wpTgGhuUjQAzNVg3r65PPhmhg/exec";
+  var PRODUCTS=[{key:"basic",name:"Basic Cloud",price:400},{key:"plus",name:"Cloud Plus",price:1100},{key:"verify",name:"Bantuan Pengesahan Identiti",price:299}];
+  var akey="";
+  function $(i){return document.getElementById(i);}
+  function el(t,x,c){var e=document.createElement(t);if(x!=null)e.textContent=x;if(c)e.className=c;return e;}
+  function rm(n){return "RM"+Number(n||0).toLocaleString("en-US",{minimumFractionDigits:2,maximumFractionDigits:2});}
+  function pname(k){for(var i=0;i<PRODUCTS.length;i++)if(PRODUCTS[i].key===k)return PRODUCTS[i].name;return k;}
+  function call(o){o.adminKey=akey;return fetch(API,{method:"POST",body:JSON.stringify(o)}).then(function(r){return r.text();}).then(function(t){try{return JSON.parse(t);}catch(e){throw new Error("jawapan bukan JSON");}});}
+  function table(head,rows){
+    var t=el("table"),tr=el("tr");head.forEach(function(h){tr.appendChild(el("th",h));});t.appendChild(tr);
+    rows.forEach(function(r){var row=el("tr");r.forEach(function(c){var td=el("td");if(c&&c.nodeType)td.appendChild(c);else td.textContent=c==null?"":c;row.appendChild(td);});t.appendChild(row);});
+    return t;
+  }
+  function load(){
+    return Promise.all([call({action:"list"}),call({action:"listsales"})]).then(function(rs){
+      var a=rs[0],s=rs[1];
+      if(!a.ok||!s.ok){$("err").textContent=a.error||s.error||"Gagal.";akey="";return false;}
+      $("err").textContent="";$("login").hidden=true;$("panel").hidden=false;
+      $("s1").textContent=a.list.length;
+      $("s2").textContent=a.list.filter(function(x){return x.status==="Menunggu";}).length;
+      $("s3").textContent=rm(a.list.reduce(function(n,x){return n+(x.owed||0);},0));
+      $("affs").innerHTML="";
+      $("affs").appendChild(table(["Tarikh","Kod","Nama","WhatsApp","Emel","Emel sah","Klik","Komisen belum bayar","Status","Tindakan"],a.list.map(function(x){
+        var act=el("span");
+        function b(label,st){var bt=el("button",label,"btn sm");bt.type="button";bt.onclick=function(){bt.disabled=true;call({action:"setstatus",code:x.code,status:st}).then(load);};act.appendChild(bt);}
+        if(x.status!=="Aktif")b("Luluskan","Aktif");
+        if(x.status!=="Gantung")b("Gantung","Gantung");
+        return [x.date,x.code,x.name,x.phone,x.email,x.emailVerified?"Ya":"Tidak",x.clicks,rm(x.owed),x.status,act];
+      })));
+      var sel=$("scode"),keep=sel.value;sel.innerHTML="";
+      a.list.filter(function(x){return x.status==="Aktif";}).forEach(function(x){var o=el("option",x.code+" - "+x.name);o.value=x.code;sel.appendChild(o);});
+      if(keep)sel.value=keep;
+      var ps=$("sprod");
+      if(!ps.options.length){PRODUCTS.forEach(function(p){var o=el("option",p.name);o.value=p.key;ps.appendChild(o);});ps.onchange=function(){PRODUCTS.forEach(function(p){if(p.key===ps.value)$("samt").value=p.price;});};ps.onchange();}
+      $("sales").innerHTML="";
+      $("sales").appendChild(table(["Tarikh","Kod","Produk","Jumlah","Komisen","Status","Nota","Tindakan"],s.list.map(function(x){
+        var c=el("span");
+        if(x.status!=="Dibayar"){var bt=el("button","Tandakan dibayar","btn sm");bt.type="button";bt.onclick=function(){bt.disabled=true;call({action:"marksale",id:x.id}).then(load);};c.appendChild(bt);}
+        return [x.date,x.code,pname(x.product),rm(x.amount),rm(x.commission),x.status,x.note,c];
+      })));
+      return true;
+    }).catch(function(e){$("err").textContent="Sambungan gagal ("+(e&&e.message?e.message:e)+").";akey="";return false;});
+  }
+  function enter(){
+    akey=$("key").value;if(!akey){$("err").textContent="Masukkan kunci admin.";return;}
+    $("go").disabled=true;load().then(function(){$("go").disabled=false;});
+  }
+  $("go").onclick=enter;
+  $("key").addEventListener("keydown",function(e){if(e.key==="Enter")enter();});
+  $("out").onclick=function(){akey="";$("key").value="";$("panel").hidden=true;$("login").hidden=false;};
+  $("sgo").onclick=function(){
+    var amt=parseFloat($("samt").value),err=$("serr");
+    if(!$("scode").value){err.textContent="Tiada affiliate aktif untuk dipilih.";return;}
+    if(!(amt>0)){err.textContent="Masukkan jumlah jualan yang sah.";return;}
+    err.textContent="";$("sgo").disabled=true;
+    call({action:"addsale",code:$("scode").value,product:$("sprod").value,amount:amt,note:$("snote").value}).then(function(r){
+      if(!r.ok){err.textContent=r.error||"Gagal.";return;}
+      $("snote").value="";return load();
+    }).catch(function(){err.textContent="Sambungan gagal.";}).then(function(){$("sgo").disabled=false;});
+  };
+})();
+</script>
+</body>
+</html>
