@@ -379,28 +379,6 @@ footer{padding:22px 0 30px;font-size:.85rem;color:var(--muted);text-align:center
       <li>Dilarang membuat dakwaan palsu, termasuk menjanjikan kelulusan akaun atau pengesahan Meta.</li>
       <li>Anda hanya boleh melihat data akaun anda sendiri. Data affiliate lain tidak dipaparkan.</li>
     </ul>
-
-    <p style="margin-top:18px;font-size:.88rem"><a href="#" id="admlink">Admin</a></p>
-    <div class="aff-tool" id="affadm" hidden>
-      <div class="fld"><label for="admkey">Kunci admin</label><input id="admkey" type="password" autocomplete="off"></div>
-      <p class="err" id="admerr" role="alert"></p>
-      <button class="btn btn-ghost" id="admgo" type="button">Papar panel admin</button>
-      <div id="admout" hidden>
-        <h3 style="margin:24px 0 4px">Senarai affiliate</h3>
-        <div class="tbl" id="admtbl"></div>
-        <h3 style="margin:24px 0 8px">Rekod jualan disahkan</h3>
-        <div class="admform">
-          <select id="salecode" aria-label="Affiliate"></select>
-          <select id="saleprod" aria-label="Produk"></select>
-          <input id="saleamt" type="number" min="0" step="0.01" placeholder="Jumlah (RM)">
-          <input id="salenote" type="text" maxlength="60" placeholder="Nota (pilihan)">
-          <button class="btn btn-wa" id="salego" type="button">Rekod jualan</button>
-        </div>
-        <p class="err" id="saleerr" role="alert"></p>
-        <h3 style="margin:16px 0 4px">Senarai jualan</h3>
-        <div class="tbl" id="saletbl"></div>
-      </div>
-    </div>
   </div>
 </section>
 
@@ -565,54 +543,6 @@ footer{padding:22px 0 30px;font-size:.85rem;color:var(--muted);text-align:center
     }).catch(function(){});
   }
 
-  /* Admin */
-  var akey="";
-  $("admlink").onclick=function(e){e.preventDefault();$("affadm").hidden=!$("affadm").hidden;};
-  function adm(o){o.adminKey=akey;return call(o);}
-  function loadAdmin(){
-    var err=$("admerr");
-    return Promise.all([adm({action:"list"}),adm({action:"listsales"})]).then(function(rs){
-      var a=rs[0],sl=rs[1];
-      if(!a.ok||!sl.ok){err.textContent=a.error||sl.error||"Gagal.";$("admout").hidden=true;return;}
-      err.textContent="";$("admout").hidden=false;
-      var rows=a.list.map(function(x){
-        var act=el("span");
-        function btn(label,status){var b=el("button",label,"btn btn-ghost");b.type="button";b.onclick=function(){b.disabled=true;adm({action:"setstatus",code:x.code,status:status}).then(loadAdmin);};act.appendChild(b);}
-        if(x.status!=="Aktif")btn("Luluskan","Aktif");
-        if(x.status!=="Gantung")btn("Gantung","Gantung");
-        return [x.date,x.code,x.name,x.phone,x.email,x.emailVerified?"Ya":"Tidak",x.clicks,rm(x.owed),x.status,act];
-      });
-      var box=$("admtbl");box.innerHTML="";
-      box.appendChild(el("p","Jumlah affiliate: "+a.list.length));
-      box.appendChild(table(["Tarikh","Kod","Nama","WhatsApp","Emel","Emel sah","Klik","Komisen belum bayar","Status","Tindakan"],rows));
-      var sel=$("salecode"),keep=sel.value;sel.innerHTML="";
-      a.list.filter(function(x){return x.status==="Aktif";}).forEach(function(x){var op=el("option",x.code+" - "+x.name);op.value=x.code;sel.appendChild(op);});
-      if(keep)sel.value=keep;
-      var ps=$("saleprod");if(!ps.options.length){PRODUCTS.forEach(function(p){var op=el("option",p.name);op.value=p.key;ps.appendChild(op);});ps.onchange=function(){PRODUCTS.forEach(function(p){if(p.key===ps.value)$("saleamt").value=p.price;});};ps.onchange();}
-      var sb=$("saletbl");sb.innerHTML="";
-      sb.appendChild(table(["Tarikh","Kod","Produk","Jumlah","Komisen","Status","Nota","Tindakan"],sl.list.map(function(x){
-        var c=el("span");
-        if(x.status!=="Dibayar"){var b=el("button","Tandakan dibayar","btn btn-ghost");b.type="button";b.onclick=function(){b.disabled=true;adm({action:"marksale",id:x.id}).then(loadAdmin);};c.appendChild(b);}
-        return [x.date,x.code,pname(x.product),rm(x.amount),rm(x.commission),x.status,x.note,c];
-      })));
-    }).catch(function(){err.textContent="Sambungan gagal.";});
-  }
-  $("admgo").onclick=function(){
-    var err=$("admerr");
-    if(!API){err.textContent="Sistem belum disambungkan.";return;}
-    akey=$("admkey").value;if(!akey){err.textContent="Masukkan kunci admin.";return;}
-    $("admgo").disabled=true;loadAdmin().then(function(){$("admgo").disabled=false;});
-  };
-  $("salego").onclick=function(){
-    var err=$("saleerr"),amt=parseFloat($("saleamt").value);
-    if(!$("salecode").value){err.textContent="Tiada affiliate aktif untuk dipilih.";return;}
-    if(!(amt>0)){err.textContent="Masukkan jumlah jualan yang sah.";return;}
-    err.textContent="";$("salego").disabled=true;
-    adm({action:"addsale",code:$("salecode").value,product:$("saleprod").value,amount:amt,note:$("salenote").value}).then(function(r){
-      if(!r.ok){err.textContent=r.error||"Gagal.";return;}
-      $("saleamt").value="";$("salenote").value="";return loadAdmin();
-    }).catch(function(){err.textContent="Sambungan gagal.";}).then(function(){$("salego").disabled=false;});
-  };
 })();
 </script>
 </body>
