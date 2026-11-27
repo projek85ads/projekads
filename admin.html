@@ -91,9 +91,10 @@ th,td{text-align:left;padding:9px 8px;border-bottom:1px solid var(--line);vertic
     return t;
   }
   function load(){
-    return Promise.all([call({action:"list"}),call({action:"listsales"})]).then(function(rs){
-      var a=rs[0],s=rs[1];
-      if(!a.ok||!s.ok){$("err").textContent=a.error||s.error||"Gagal.";akey="";return false;}
+    return call({action:"list"}).then(function(a){
+      if(!a.ok){$("err").textContent=a.error||"Gagal.";akey="";return false;}
+      return call({action:"listsales"}).then(function(s){
+      if(!s.ok){$("err").textContent=s.error||"Gagal.";return false;}
       $("err").textContent="";$("login").hidden=true;$("panel").hidden=false;
       $("s1").textContent=a.list.length;
       $("s2").textContent=a.list.filter(function(x){return x.status==="Menunggu";}).length;
@@ -118,6 +119,7 @@ th,td{text-align:left;padding:9px 8px;border-bottom:1px solid var(--line);vertic
         return [x.date,x.code,pname(x.product),rm(x.amount),rm(x.commission),x.status,x.note,c];
       })));
       return true;
+      });
     }).catch(function(e){$("err").textContent="Sambungan gagal ("+(e&&e.message?e.message:e)+").";akey="";return false;});
   }
   function enter(){
