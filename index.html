@@ -241,11 +241,11 @@ footer{padding:22px 0 30px;font-size:.85rem;color:var(--muted);text-align:center
 <section id="pakej">
   <div class="wrap">
     <h2>Pakej</h2>
-    <p class="lead">Pilih pakej yang sesuai. Tanya kami jika anda mahu bantuan memilih.</p>
+    <p class="lead">Pilih pakej yang sesuai. Semua harga adalah sebulan. Tanya kami jika anda mahu bantuan memilih.</p>
     <div class="pk">
       <div class="pkg" id="pkg-basic">
         <h3>Basic Cloud</h3>
-        <div class="price">RM400</div>
+        <div class="price">RM400<small style="font-size:1rem;font-weight:600"> / bulan</small></div>
         <ul>
           <li><span>Profil</span><span>1</span></li>
           <li><span>Business Manager</span><span>1</span></li>
@@ -260,7 +260,7 @@ footer{padding:22px 0 30px;font-size:.85rem;color:var(--muted);text-align:center
       <div class="pkg best" id="pkg-plus">
         <span class="tag">Paling lengkap</span>
         <h3>Cloud Plus</h3>
-        <div class="price">RM1,100</div>
+        <div class="price">RM1,100<small style="font-size:1rem;font-weight:600"> / bulan</small></div>
         <ul>
           <li><span>Profil</span><span>1</span></li>
           <li><span>Business Manager</span><span>5</span></li>
@@ -361,20 +361,23 @@ footer{padding:22px 0 30px;font-size:.85rem;color:var(--muted);text-align:center
       <p style="color:var(--muted);margin-top:14px">Kod affiliate anda</p>
       <div class="bigcode" id="dcode"></div>
       <div class="stats" id="dstats"></div>
-      <h3 style="margin:8px 0 4px">Komisen setiap jualan</h3>
+      <h3 style="margin:8px 0 4px">Komisen setiap bulan</h3>
       <div class="tbl" id="dcomm"></div>
+      <h3 style="margin:24px 0 4px">Pelanggan anda</h3>
+      <div class="tbl" id="dsubs"></div>
       <div id="dlinkswrap">
         <h3 style="margin:24px 0 4px">Pautan affiliate anda</h3>
         <div class="links" id="links"></div>
       </div>
-      <h3 style="margin:24px 0 4px">Jualan terkini</h3>
+      <h3 style="margin:24px 0 4px">Komisen terkini</h3>
       <div class="tbl" id="dsales"></div>
       <button class="btn btn-ghost" id="aflogout" type="button" style="margin-top:20px">Log keluar</button>
     </div>
 
     <ul class="terms" style="margin-top:24px">
       <li>Akaun baharu perlu disahkan emel dan diluluskan oleh admin sebelum pautan affiliate diaktifkan.</li>
-      <li>Komisen hanya untuk pembelian baharu yang dibayar dan disahkan oleh kami. Jumlah komisen bagi setiap produk dipaparkan dalam papan pemuka anda.</li>
+      <li>Komisen adalah berulang: anda menerima komisen setiap bulan selagi pelanggan yang anda rujuk kekal melanggan dan membayar. Komisen berhenti apabila pelanggan berhenti melanggan.</li>
+      <li>Komisen hanya untuk pelanggan baharu yang dibayar dan disahkan oleh kami. Jumlah komisen bagi setiap produk dipaparkan dalam papan pemuka anda.</li>
       <li>Pembelian sendiri menggunakan kod sendiri tidak layak.</li>
       <li>Dilarang membuat dakwaan palsu, termasuk menjanjikan kelulusan akaun atau pengesahan Meta.</li>
       <li>Anda hanya boleh melihat data akaun anda sendiri. Data affiliate lain tidak dipaparkan.</li>
@@ -405,8 +408,8 @@ footer{padding:22px 0 30px;font-size:.85rem;color:var(--muted);text-align:center
   /* TETAPAN: tampal URL Web App Google Apps Script anda di sini */
   var API="https://script.google.com/macros/s/AKfycbxt1Luz9tv70QZFOVnEMngdVOnwUSsk9JKhUfPhyjVW_wpTgGhuUjQAzNVg3r65PPhmhg/exec";
   var PRODUCTS=[
-    {key:"basic",name:"Basic Cloud",price:400,target:"pkg-basic"},
-    {key:"plus",name:"Cloud Plus",price:1100,target:"pkg-plus"},
+    {key:"basic",name:"Basic Cloud",price:400,note:"/ bulan",target:"pkg-basic"},
+    {key:"plus",name:"Cloud Plus",price:1100,note:"/ bulan",target:"pkg-plus"},
     {key:"verify",name:"Bantuan Pengesahan Identiti",price:299,note:"/ bulan",target:"pengesahan"}
   ];
   var RK="ca_ref",SK="ca_sess",DAYS=30;
@@ -482,19 +485,23 @@ footer{padding:22px 0 30px;font-size:.85rem;color:var(--muted);text-align:center
     }
     st.hidden=!st.childNodes.length;
     var s=pf.stats||{count:0,sales:0,commission:0,paid:0,pending:0},box=$("dstats");box.innerHTML="";
-    [["Klik WhatsApp",pf.clicks||0],["Jualan disahkan",s.count],["Jumlah jualan",rm(s.sales)],["Komisen terkumpul",rm(s.commission)],["Belum dibayar",rm(s.pending)],["Sudah dibayar",rm(s.paid)]].forEach(function(c){
+    [["Klik WhatsApp",pf.clicks||0],["Pelanggan aktif",pf.activeSubs||0],["Komisen bulanan dijangka",rm(pf.monthlyCommission)],["Komisen terkumpul",rm(s.commission)],["Belum dibayar",rm(s.pending)],["Sudah dibayar",rm(s.paid)]].forEach(function(c){
       var d=el("div",null,"stat");d.appendChild(el("b",c[1]));d.appendChild(el("span",c[0]));box.appendChild(d);
     });
     var cm=pf.commission||{};
     $("dcomm").innerHTML="";
-    $("dcomm").appendChild(table(["Produk","Harga","Komisen setiap jualan"],PRODUCTS.map(function(p){
+    $("dcomm").appendChild(table(["Produk","Harga","Komisen setiap bulan"],PRODUCTS.map(function(p){
       return [p.name,rm(p.price)+(p.note?" "+p.note:""),rm(cm[p.key]||0)];
     })));
     $("dlinkswrap").hidden=!active;
     if(active)links(pf.code);
     var rec=pf.recent||[],sb=$("dsales");sb.innerHTML="";
-    if(!rec.length)sb.appendChild(el("p","Belum ada jualan direkodkan.",null));
-    else sb.appendChild(table(["Tarikh","Produk","Jumlah","Komisen","Status"],rec.map(function(x){return [x.date,pname(x.product),rm(x.amount),rm(x.commission),x.status];})));
+    if(!rec.length)sb.appendChild(el("p","Belum ada komisen direkodkan.",null));
+    else sb.appendChild(table(["Tarikh","Produk","Tempoh","Komisen","Status"],rec.map(function(x){return [x.date,pname(x.product),x.period||"-",rm(x.commission),x.status];})));
+    var sd=$("dsubs");sd.innerHTML="";
+    var subs=pf.subs||[];
+    if(!subs.length)sd.appendChild(el("p","Belum ada pelanggan berlangganan melalui anda.",null));
+    else sd.appendChild(table(["Pelanggan","Produk","Mula","Status","Bulan ini"],subs.map(function(x){return ["Pelanggan "+x.n,pname(x.product),x.since,x.status,x.status==="Aktif"?(x.paid?"Komisen direkod":"Belum direkod"):"-"];})));
   }
   function out(){del(SK);$("affdash").hidden=true;$("affauth").hidden=false;}
 

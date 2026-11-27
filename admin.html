@@ -58,7 +58,23 @@ th,td{text-align:left;padding:9px 8px;border-bottom:1px solid var(--line);vertic
     <h2>Senarai affiliate</h2>
     <div class="tbl" id="affs"></div>
 
-    <h2>Rekod jualan disahkan</h2>
+    <h2>Langganan pelanggan (komisen bulanan)</h2>
+    <p class="muted">Daftarkan pelanggan yang dirujuk oleh affiliate. Komisen direkod setiap bulan selagi langganan aktif dan pelanggan sudah membayar.</p>
+    <div class="row">
+      <select id="subcode" aria-label="Affiliate"></select>
+      <select id="subprod" aria-label="Produk"></select>
+      <input id="subname" type="text" maxlength="40" placeholder="Nama pelanggan (admin sahaja)">
+      <label style="margin:0;font-weight:400"><input type="checkbox" id="subfirst" checked style="width:auto;max-width:none"> Rekod bulan pertama sekarang</label>
+      <button class="btn go" id="subgo" type="button">Tambah langganan</button>
+    </div>
+    <p class="err" id="suberr" role="alert"></p>
+    <div class="row" style="margin:6px 0 10px">
+      <button class="btn" id="subbulk" type="button">Rekod semua bayaran bulan ini</button>
+      <span class="muted" id="subperiod" style="margin:0"></span>
+    </div>
+    <div class="tbl" id="subs"></div>
+
+    <h2>Rekod komisen sekali (manual)</h2>
     <div class="row">
       <select id="scode" aria-label="Affiliate"></select>
       <select id="sprod" aria-label="Produk"></select>
@@ -90,11 +106,30 @@ th,td{text-align:left;padding:9px 8px;border-bottom:1px solid var(--line);vertic
     rows.forEach(function(r){var row=el("tr");r.forEach(function(c){var td=el("td");if(c&&c.nodeType)td.appendChild(c);else td.textContent=c==null?"":c;row.appendChild(td);});t.appendChild(row);});
     return t;
   }
+  function renderSubs(sb,a){
+    var cs=$("subcode"),keep=cs.value;cs.innerHTML="";
+    a.list.filter(function(x){return x.status==="Aktif";}).forEach(function(x){var o=el("option",x.code+" - "+x.name);o.value=x.code;cs.appendChild(o);});
+    if(keep)cs.value=keep;
+    var ps=$("subprod");
+    if(!ps.options.length)PRODUCTS.forEach(function(p){var o=el("option",p.name);o.value=p.key;ps.appendChild(o);});
+    $("subperiod").textContent="Bulan semasa: "+sb.period;
+    var box=$("subs");box.innerHTML="";
+    box.appendChild(table(["Mula","Kod","Produk","Pelanggan","Status","Bulan ini","Tindakan"],sb.list.map(function(x){
+      var act=el("span");
+      function b(label,fn){var bt=el("button",label,"btn sm");bt.type="button";bt.onclick=function(){bt.disabled=true;fn().then(function(r){if(!r.ok)$("suberr").textContent=r.error||"Gagal.";else $("suberr").textContent="";return load();});};act.appendChild(bt);}
+      if(x.status==="Aktif"&&!x.paid)b("Rekod bayaran bulan ini",function(){return call({action:"subpay",id:x.id});});
+      if(x.status==="Aktif")b("Henti",function(){return call({action:"subend",id:x.id,status:"Berhenti"});});
+      else b("Aktifkan semula",function(){return call({action:"subend",id:x.id,status:"Aktif"});});
+      return [x.since,x.code,pname(x.product),x.customer,x.status,x.status==="Aktif"?(x.paid?"Direkod":"Belum"):"-",act];
+    })));
+  }
   function load(){
     return call({action:"list"}).then(function(a){
       if(!a.ok){$("err").textContent=a.error||"Gagal.";akey="";return false;}
       return call({action:"listsales"}).then(function(s){
       if(!s.ok){$("err").textContent=s.error||"Gagal.";return false;}
+      return call({action:"listsubs"}).then(function(sb){
+      if(!sb.ok){$("err").textContent=sb.error||"Gagal.";return false;}
       $("err").textContent="";$("login").hidden=true;$("panel").hidden=false;
       $("s1").textContent=a.list.length;
       $("s2").textContent=a.list.filter(function(x){return x.status==="Menunggu";}).length;
@@ -118,7 +153,9 @@ th,td{text-align:left;padding:9px 8px;border-bottom:1px solid var(--line);vertic
         if(x.status!=="Dibayar"){var bt=el("button","Tandakan dibayar","btn sm");bt.type="button";bt.onclick=function(){bt.disabled=true;call({action:"marksale",id:x.id}).then(load);};c.appendChild(bt);}
         return [x.date,x.code,pname(x.product),rm(x.amount),rm(x.commission),x.status,x.note,c];
       })));
+      renderSubs(sb,a);
       return true;
+      });
       });
     }).catch(function(e){$("err").textContent="Sambungan gagal ("+(e&&e.message?e.message:e)+").";akey="";return false;});
   }
@@ -129,6 +166,24 @@ th,td{text-align:left;padding:9px 8px;border-bottom:1px solid var(--line);vertic
   $("go").onclick=enter;
   $("key").addEventListener("keydown",function(e){if(e.key==="Enter")enter();});
   $("out").onclick=function(){akey="";$("key").value="";$("panel").hidden=true;$("login").hidden=false;};
+  $("subgo").onclick=function(){
+    var err=$("suberr");
+    if(!$("subcode").value){err.textContent="Tiada affiliate aktif untuk dipilih.";return;}
+    err.textContent="";$("subgo").disabled=true;
+    call({action:"addsub",code:$("subcode").value,product:$("subprod").value,customer:$("subname").value,recordFirst:$("subfirst").checked}).then(function(r){
+      if(!r.ok){err.textContent=r.error||"Gagal.";return;}
+      $("subname").value="";return load();
+    }).catch(function(){err.textContent="Sambungan gagal.";}).then(function(){$("subgo").disabled=false;});
+  };
+  $("subbulk").onclick=function(){
+    var err=$("suberr");
+    if(!confirm("Rekod komisen bulan ini untuk SEMUA langganan aktif yang belum direkod? Pastikan pelanggan sudah membayar."))return;
+    err.textContent="";$("subbulk").disabled=true;
+    call({action:"paybulk"}).then(function(r){
+      if(!r.ok){err.textContent=r.error||"Gagal.";return;}
+      err.textContent=r.count+" komisen direkod untuk "+r.period+".";return load().then(function(){err.textContent=r.count+" komisen direkod untuk "+r.period+".";});
+    }).catch(function(){err.textContent="Sambungan gagal.";}).then(function(){$("subbulk").disabled=false;});
+  };
   $("sgo").onclick=function(){
     var amt=parseFloat($("samt").value),err=$("serr");
     if(!$("scode").value){err.textContent="Tiada affiliate aktif untuk dipilih.";return;}
