@@ -425,7 +425,7 @@ footer{padding:22px 0 30px;font-size:.85rem;color:var(--muted);text-align:center
 <script>
 (function(){
   /* TETAPAN: tampal URL Web App Google Apps Script anda di sini */
-  var API="AKfycbxt1Luz9tv70QZFOVnEMngdVOnwUSsk9JKhUfPhyjVW_wpTgGhuUjQAzNVg3r65PPhmhg/exec";
+  var API="https://script.google.com/macros/s/AKfycbxt1Luz9tv70QZFOVnEMngdVOnwUSsk9JKhUfPhyjVW_wpTgGhuUjQAzNVg3r65PPhmhg/exec";
   var PRODUCTS=[
     {key:"basic",name:"Basic Cloud",price:400,target:"pkg-basic"},
     {key:"plus",name:"Cloud Plus",price:1100,target:"pkg-plus"},
@@ -437,7 +437,7 @@ footer{padding:22px 0 30px;font-size:.85rem;color:var(--muted);text-align:center
   function put(k,v){try{localStorage.setItem(k,JSON.stringify(v));}catch(e){}}
   function get(k){try{return JSON.parse(localStorage.getItem(k)||"null");}catch(e){return null;}}
   function del(k){try{localStorage.removeItem(k);}catch(e){}}
-  function call(o){return fetch(API,{method:"POST",body:JSON.stringify(o)}).then(function(r){return r.json();});}
+  function call(o){return fetch(API,{method:"POST",body:JSON.stringify(o)}).then(function(r){return r.text();}).then(function(t){try{return JSON.parse(t);}catch(e){throw new Error("jawapan bukan JSON: "+t.slice(0,60).replace(/\s+/g," "));}});}
   function el(tag,txt,cls){var e=document.createElement(tag);if(txt!=null)e.textContent=txt;if(cls)e.className=cls;return e;}
   function rm(n){return "RM"+Number(n||0).toLocaleString("en-US",{minimumFractionDigits:2,maximumFractionDigits:2});}
   function pname(k){for(var i=0;i<PRODUCTS.length;i++)if(PRODUCTS[i].key===k)return PRODUCTS[i].name;return k;}
@@ -551,7 +551,7 @@ footer{padding:22px 0 30px;font-size:.85rem;color:var(--muted);text-align:center
       put(SK,{code:r.profile.code,token:r.token,profile:r.profile});
       $("afw").value="";dash(r.profile);
       $("affiliate").scrollIntoView({behavior:"smooth"});
-    }).catch(function(){err.textContent="Sambungan gagal. Semak internet dan cuba lagi.";})
+    }).catch(function(e){console.error(e);err.textContent="Sambungan gagal ("+(e&&e.message?e.message:e)+"). Semak internet dan cuba lagi.";})
     .then(function(){btn.disabled=false;btn.textContent=lbl;});
   };
   $("aflogout").onclick=out;
