@@ -160,6 +160,18 @@ footer{padding:22px 0 30px;font-size:.85rem;color:var(--muted);text-align:center
 .tbl th,.tbl td{text-align:left;padding:10px 8px;border-bottom:1px solid var(--line)}
 .aff-tool .btn:disabled{opacity:.55;cursor:not-allowed}
 #affiliate [hidden]{display:none!important}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:8px 0 22px}
+.stat{background:var(--soft);border-radius:12px;padding:14px}
+.stat b{display:block;font-size:1.35rem;letter-spacing:-.02em}
+.stat span{font-size:.85rem;color:var(--muted)}
+.notice p{margin:0 0 10px}.notice p:last-child{margin:0}
+.notice .btn{padding:8px 16px;font-size:.92rem}
+.admform{display:flex;flex-wrap:wrap;gap:10px}
+.admform input,.admform select,.aff-tool select{padding:11px 12px;border-radius:10px;border:2px solid var(--line);background:var(--bg);color:var(--ink);font:inherit;max-width:210px}
+.admform .btn{padding:10px 18px}
+.tbl .btn{padding:5px 11px;font-size:.82rem;border-radius:8px;margin-right:6px}
+.okmsg{color:var(--wa);font-weight:600}
+@media (max-width:860px){.stats{grid-template-columns:repeat(2,1fr)}}
 </style>
 </head>
 <body>
@@ -325,7 +337,7 @@ footer{padding:22px 0 30px;font-size:.85rem;color:var(--muted);text-align:center
 <section class="band" id="affiliate">
   <div class="wrap">
     <h2>Program Affiliate</h2>
-    <p class="lead">Daftar akaun percuma, log masuk bila-bila masa, dan dapatkan kod serta pautan affiliate anda untuk setiap produk kami.</p>
+    <p class="lead">Daftar akaun percuma, sahkan emel anda, dan selepas diluluskan anda akan dapat kod, pautan affiliate serta rekod komisen anda sendiri.</p>
 
     <div class="aff-tool" id="affauth">
       <div class="tabs" role="tablist">
@@ -334,7 +346,7 @@ footer{padding:22px 0 30px;font-size:.85rem;color:var(--muted);text-align:center
       </div>
       <div id="pnreg">
         <div class="fld"><label for="afn">Nama penuh</label><input id="afn" type="text" maxlength="60" autocomplete="name"></div>
-        <div class="fld"><label for="afe">Emel (pilihan)</label><input id="afe" type="email" maxlength="80" autocomplete="email"></div>
+        <div class="fld"><label for="afe">Emel</label><input id="afe" type="email" maxlength="80" autocomplete="email"></div>
       </div>
       <div class="fld"><label for="afp">No. WhatsApp</label><input id="afp" type="tel" maxlength="16" placeholder="contoh: 0123456789" autocomplete="tel"></div>
       <div class="fld"><label for="afw">Kata laluan</label><input id="afw" type="password" maxlength="64" autocomplete="current-password"><small id="afwh">Sekurang-kurangnya 6 aksara.</small></div>
@@ -345,26 +357,49 @@ footer{padding:22px 0 30px;font-size:.85rem;color:var(--muted);text-align:center
 
     <div class="aff-tool" id="affdash" hidden>
       <h3 id="dwelcome" style="margin-bottom:6px"></h3>
-      <p style="color:var(--muted)">Kod affiliate anda</p>
+      <div id="dstatus" class="notice" hidden></div>
+      <p style="color:var(--muted);margin-top:14px">Kod affiliate anda</p>
       <div class="bigcode" id="dcode"></div>
-      <p id="dstat" style="margin-bottom:8px"></p>
-      <h3 style="margin:20px 0 4px">Pautan affiliate anda</h3>
-      <div class="links" id="links"></div>
+      <div class="stats" id="dstats"></div>
+      <h3 style="margin:8px 0 4px">Komisen setiap jualan</h3>
+      <div class="tbl" id="dcomm"></div>
+      <div id="dlinkswrap">
+        <h3 style="margin:24px 0 4px">Pautan affiliate anda</h3>
+        <div class="links" id="links"></div>
+      </div>
+      <h3 style="margin:24px 0 4px">Jualan terkini</h3>
+      <div class="tbl" id="dsales"></div>
       <button class="btn btn-ghost" id="aflogout" type="button" style="margin-top:20px">Log keluar</button>
     </div>
 
     <ul class="terms" style="margin-top:24px">
-      <li>Komisen hanya untuk pembelian baharu yang dibayar dan disahkan oleh kami. Kadar komisen akan dimaklumkan oleh admin.</li>
+      <li>Akaun baharu perlu disahkan emel dan diluluskan oleh admin sebelum pautan affiliate diaktifkan.</li>
+      <li>Komisen hanya untuk pembelian baharu yang dibayar dan disahkan oleh kami. Jumlah komisen bagi setiap produk dipaparkan dalam papan pemuka anda.</li>
       <li>Pembelian sendiri menggunakan kod sendiri tidak layak.</li>
       <li>Dilarang membuat dakwaan palsu, termasuk menjanjikan kelulusan akaun atau pengesahan Meta.</li>
+      <li>Anda hanya boleh melihat data akaun anda sendiri. Data affiliate lain tidak dipaparkan.</li>
     </ul>
 
     <p style="margin-top:18px;font-size:.88rem"><a href="#" id="admlink">Admin</a></p>
     <div class="aff-tool" id="affadm" hidden>
       <div class="fld"><label for="admkey">Kunci admin</label><input id="admkey" type="password" autocomplete="off"></div>
       <p class="err" id="admerr" role="alert"></p>
-      <button class="btn btn-ghost" id="admgo" type="button">Papar senarai affiliate</button>
-      <div class="tbl" id="admtbl"></div>
+      <button class="btn btn-ghost" id="admgo" type="button">Papar panel admin</button>
+      <div id="admout" hidden>
+        <h3 style="margin:24px 0 4px">Senarai affiliate</h3>
+        <div class="tbl" id="admtbl"></div>
+        <h3 style="margin:24px 0 8px">Rekod jualan disahkan</h3>
+        <div class="admform">
+          <select id="salecode" aria-label="Affiliate"></select>
+          <select id="saleprod" aria-label="Produk"></select>
+          <input id="saleamt" type="number" min="0" step="0.01" placeholder="Jumlah (RM)">
+          <input id="salenote" type="text" maxlength="60" placeholder="Nota (pilihan)">
+          <button class="btn btn-wa" id="salego" type="button">Rekod jualan</button>
+        </div>
+        <p class="err" id="saleerr" role="alert"></p>
+        <h3 style="margin:16px 0 4px">Senarai jualan</h3>
+        <div class="tbl" id="saletbl"></div>
+      </div>
     </div>
   </div>
 </section>
@@ -392,9 +427,9 @@ footer{padding:22px 0 30px;font-size:.85rem;color:var(--muted);text-align:center
   /* TETAPAN: tampal URL Web App Google Apps Script anda di sini */
   var API="";
   var PRODUCTS=[
-    {key:"basic",name:"Basic Cloud",target:"pkg-basic"},
-    {key:"plus",name:"Cloud Plus",target:"pkg-plus"},
-    {key:"verify",name:"Bantuan Pengesahan Identiti",target:"pengesahan"}
+    {key:"basic",name:"Basic Cloud",price:400,target:"pkg-basic"},
+    {key:"plus",name:"Cloud Plus",price:1100,target:"pkg-plus"},
+    {key:"verify",name:"Bantuan Pengesahan Identiti",price:299,note:"/ bulan",target:"pengesahan"}
   ];
   var RK="ca_ref",SK="ca_sess",DAYS=30;
   function $(i){return document.getElementById(i);}
@@ -402,8 +437,15 @@ footer{padding:22px 0 30px;font-size:.85rem;color:var(--muted);text-align:center
   function put(k,v){try{localStorage.setItem(k,JSON.stringify(v));}catch(e){}}
   function get(k){try{return JSON.parse(localStorage.getItem(k)||"null");}catch(e){return null;}}
   function del(k){try{localStorage.removeItem(k);}catch(e){}}
-  function call(o){
-    return fetch(API,{method:"POST",body:JSON.stringify(o)}).then(function(r){return r.json();});
+  function call(o){return fetch(API,{method:"POST",body:JSON.stringify(o)}).then(function(r){return r.json();});}
+  function el(tag,txt,cls){var e=document.createElement(tag);if(txt!=null)e.textContent=txt;if(cls)e.className=cls;return e;}
+  function rm(n){return "RM"+Number(n||0).toLocaleString("en-US",{minimumFractionDigits:2,maximumFractionDigits:2});}
+  function pname(k){for(var i=0;i<PRODUCTS.length;i++)if(PRODUCTS[i].key===k)return PRODUCTS[i].name;return k;}
+  function table(head,rows){
+    var t=el("table"),tr=el("tr");
+    head.forEach(function(h){tr.appendChild(el("th",h));});t.appendChild(tr);
+    rows.forEach(function(r){var row=el("tr");r.forEach(function(c){var td=el("td");if(c&&c.nodeType)td.appendChild(c);else td.textContent=c==null?"":c;row.appendChild(td);});t.appendChild(row);});
+    return t;
   }
 
   /* Kod rujukan pelanggan */
@@ -423,8 +465,8 @@ footer{padding:22px 0 30px;font-size:.85rem;color:var(--muted);text-align:center
     var bar=$("refbar");bar.textContent="Anda datang melalui rakan kongsi: "+ref;bar.classList.add("on");
   }
   PRODUCTS.forEach(function(p){
-    if(p.key===pk){var el=$(p.target);
-      if(el)setTimeout(function(){el.scrollIntoView({behavior:"smooth",block:"center"});el.classList.add("hl");},300);}
+    if(p.key===pk){var e=$(p.target);
+      if(e)setTimeout(function(){e.scrollIntoView({behavior:"smooth",block:"center"});e.classList.add("hl");},300);}
   });
 
   /* Pautan affiliate */
@@ -433,23 +475,48 @@ footer{padding:22px 0 30px;font-size:.85rem;color:var(--muted);text-align:center
     var box=$("links");box.innerHTML="";
     PRODUCTS.forEach(function(p){
       var url=base+"?ref="+code+"&pkg="+p.key;
-      var r=document.createElement("div");r.className="lk";
-      var n=document.createElement("strong");n.textContent=p.name;
-      var c=document.createElement("code");c.textContent=url;
-      var b=document.createElement("button");b.type="button";b.textContent="Salin";
+      var r=el("div",null,"lk"),c=el("code",url),b=el("button","Salin");b.type="button";
       b.onclick=function(){
         function sel(){var g=document.createRange();g.selectNodeContents(c);var x=getSelection();x.removeAllRanges();x.addRange(g);}
         try{navigator.clipboard.writeText(url).then(function(){b.textContent="Disalin";setTimeout(function(){b.textContent="Salin";},1500);},sel);}catch(e){sel();}
       };
-      r.appendChild(n);r.appendChild(c);r.appendChild(b);box.appendChild(r);
+      r.appendChild(el("strong",p.name));r.appendChild(c);r.appendChild(b);box.appendChild(r);
     });
   }
+
+  /* Papan pemuka */
   function dash(pf){
     $("affauth").hidden=true;$("affdash").hidden=false;
     $("dwelcome").textContent="Selamat datang, "+pf.name;
     $("dcode").textContent=pf.code;
-    $("dstat").textContent="Klik WhatsApp melalui pautan anda: "+(pf.clicks||0);
-    links(pf.code);
+    var active=pf.status==="Aktif",st=$("dstatus");st.innerHTML="";
+    if(pf.status==="Menunggu")st.appendChild(el("p","Akaun anda sedang menunggu kelulusan admin. Pautan affiliate akan dipaparkan sebaik sahaja akaun diluluskan, dan anda akan menerima emel."));
+    if(!pf.emailVerified){
+      var p=el("p","Emel anda belum disahkan. Semak peti masuk (dan folder spam) untuk emel pengesahan. ");
+      var b=el("button","Hantar semula emel","btn btn-ghost");b.type="button";
+      var msg=el("span",null,"okmsg");
+      b.onclick=function(){
+        var sess=get(SK);if(!sess)return;b.disabled=true;
+        call({action:"resend",code:sess.code,token:sess.token}).then(function(r){msg.textContent=" "+(r.message||r.error||"");})
+        .catch(function(){msg.textContent=" Sambungan gagal.";}).then(function(){b.disabled=false;});
+      };
+      p.appendChild(b);p.appendChild(msg);st.appendChild(p);
+    }
+    st.hidden=!st.childNodes.length;
+    var s=pf.stats||{count:0,sales:0,commission:0,paid:0,pending:0},box=$("dstats");box.innerHTML="";
+    [["Klik WhatsApp",pf.clicks||0],["Jualan disahkan",s.count],["Jumlah jualan",rm(s.sales)],["Komisen terkumpul",rm(s.commission)],["Belum dibayar",rm(s.pending)],["Sudah dibayar",rm(s.paid)]].forEach(function(c){
+      var d=el("div",null,"stat");d.appendChild(el("b",c[1]));d.appendChild(el("span",c[0]));box.appendChild(d);
+    });
+    var cm=pf.commission||{};
+    $("dcomm").innerHTML="";
+    $("dcomm").appendChild(table(["Produk","Harga","Komisen setiap jualan"],PRODUCTS.map(function(p){
+      return [p.name,rm(p.price)+(p.note?" "+p.note:""),rm(cm[p.key]||0)];
+    })));
+    $("dlinkswrap").hidden=!active;
+    if(active)links(pf.code);
+    var rec=pf.recent||[],sb=$("dsales");sb.innerHTML="";
+    if(!rec.length)sb.appendChild(el("p","Belum ada jualan direkodkan.",null));
+    else sb.appendChild(table(["Tarikh","Produk","Jumlah","Komisen","Status"],rec.map(function(x){return [x.date,pname(x.product),rm(x.amount),rm(x.commission),x.status];})));
   }
   function out(){del(SK);$("affdash").hidden=true;$("affauth").hidden=false;}
 
@@ -473,8 +540,8 @@ footer{padding:22px 0 30px;font-size:.85rem;color:var(--muted);text-align:center
     var name=$("afn").value.trim().replace(/\s+/g," "),em=$("afe").value.trim(),ph=$("afp").value.replace(/[^0-9+]/g,""),pw=$("afw").value;
     var digits=ph.replace(/\D/g,"");
     if(mode==="reg"&&name.length<2){err.textContent="Sila masukkan nama penuh anda.";return;}
+    if(mode==="reg"&&!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(em)){err.textContent="Sila masukkan emel yang sah.";return;}
     if(digits.length<9||digits.length>14){err.textContent="Sila masukkan nombor WhatsApp yang sah.";return;}
-    if(mode==="reg"&&em&&!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(em)){err.textContent="Format emel tidak sah.";return;}
     if(pw.length<6){err.textContent="Kata laluan sekurang-kurangnya 6 aksara.";return;}
     if(mode==="reg"&&!$("afa").checked){err.textContent="Sila tanda persetujuan dengan syarat program.";return;}
     err.textContent="";btn.disabled=true;var lbl=btn.textContent;btn.textContent="Sila tunggu...";
@@ -489,7 +556,6 @@ footer{padding:22px 0 30px;font-size:.85rem;color:var(--muted);text-align:center
   };
   $("aflogout").onclick=out;
 
-  /* Pulihkan sesi */
   var sess=get(SK);
   if(sess&&sess.profile){
     dash(sess.profile);
@@ -500,27 +566,52 @@ footer{padding:22px 0 30px;font-size:.85rem;color:var(--muted);text-align:center
   }
 
   /* Admin */
+  var akey="";
   $("admlink").onclick=function(e){e.preventDefault();$("affadm").hidden=!$("affadm").hidden;};
-  $("admgo").onclick=function(){
-    var err=$("admerr"),key=$("admkey").value;
-    if(!API){err.textContent="Sistem belum disambungkan.";return;}
-    if(!key){err.textContent="Masukkan kunci admin.";return;}
-    err.textContent="";$("admgo").disabled=true;
-    call({action:"list",adminKey:key}).then(function(r){
-      if(!r.ok){err.textContent=r.error||"Gagal.";return;}
-      var t=document.createElement("table"),hd=["Tarikh","Kod","Nama","WhatsApp","Emel","Klik","Status"];
-      var tr=document.createElement("tr");
-      hd.forEach(function(h){var th=document.createElement("th");th.textContent=h;tr.appendChild(th);});t.appendChild(tr);
-      r.list.forEach(function(x){
-        var row=document.createElement("tr");
-        [x.date,x.code,x.name,x.phone,x.email,x.clicks,x.status].forEach(function(v){var td=document.createElement("td");td.textContent=v;row.appendChild(td);});
-        t.appendChild(row);
+  function adm(o){o.adminKey=akey;return call(o);}
+  function loadAdmin(){
+    var err=$("admerr");
+    return Promise.all([adm({action:"list"}),adm({action:"listsales"})]).then(function(rs){
+      var a=rs[0],sl=rs[1];
+      if(!a.ok||!sl.ok){err.textContent=a.error||sl.error||"Gagal.";$("admout").hidden=true;return;}
+      err.textContent="";$("admout").hidden=false;
+      var rows=a.list.map(function(x){
+        var act=el("span");
+        function btn(label,status){var b=el("button",label,"btn btn-ghost");b.type="button";b.onclick=function(){b.disabled=true;adm({action:"setstatus",code:x.code,status:status}).then(loadAdmin);};act.appendChild(b);}
+        if(x.status!=="Aktif")btn("Luluskan","Aktif");
+        if(x.status!=="Gantung")btn("Gantung","Gantung");
+        return [x.date,x.code,x.name,x.phone,x.email,x.emailVerified?"Ya":"Tidak",x.clicks,rm(x.owed),x.status,act];
       });
       var box=$("admtbl");box.innerHTML="";
-      var cnt=document.createElement("p");cnt.textContent="Jumlah affiliate: "+r.list.length;cnt.style.marginTop="8px";
-      box.appendChild(cnt);box.appendChild(t);
-    }).catch(function(){err.textContent="Sambungan gagal.";})
-    .then(function(){$("admgo").disabled=false;});
+      box.appendChild(el("p","Jumlah affiliate: "+a.list.length));
+      box.appendChild(table(["Tarikh","Kod","Nama","WhatsApp","Emel","Emel sah","Klik","Komisen belum bayar","Status","Tindakan"],rows));
+      var sel=$("salecode"),keep=sel.value;sel.innerHTML="";
+      a.list.filter(function(x){return x.status==="Aktif";}).forEach(function(x){var op=el("option",x.code+" - "+x.name);op.value=x.code;sel.appendChild(op);});
+      if(keep)sel.value=keep;
+      var ps=$("saleprod");if(!ps.options.length){PRODUCTS.forEach(function(p){var op=el("option",p.name);op.value=p.key;ps.appendChild(op);});ps.onchange=function(){PRODUCTS.forEach(function(p){if(p.key===ps.value)$("saleamt").value=p.price;});};ps.onchange();}
+      var sb=$("saletbl");sb.innerHTML="";
+      sb.appendChild(table(["Tarikh","Kod","Produk","Jumlah","Komisen","Status","Nota","Tindakan"],sl.list.map(function(x){
+        var c=el("span");
+        if(x.status!=="Dibayar"){var b=el("button","Tandakan dibayar","btn btn-ghost");b.type="button";b.onclick=function(){b.disabled=true;adm({action:"marksale",id:x.id}).then(loadAdmin);};c.appendChild(b);}
+        return [x.date,x.code,pname(x.product),rm(x.amount),rm(x.commission),x.status,x.note,c];
+      })));
+    }).catch(function(){err.textContent="Sambungan gagal.";});
+  }
+  $("admgo").onclick=function(){
+    var err=$("admerr");
+    if(!API){err.textContent="Sistem belum disambungkan.";return;}
+    akey=$("admkey").value;if(!akey){err.textContent="Masukkan kunci admin.";return;}
+    $("admgo").disabled=true;loadAdmin().then(function(){$("admgo").disabled=false;});
+  };
+  $("salego").onclick=function(){
+    var err=$("saleerr"),amt=parseFloat($("saleamt").value);
+    if(!$("salecode").value){err.textContent="Tiada affiliate aktif untuk dipilih.";return;}
+    if(!(amt>0)){err.textContent="Masukkan jumlah jualan yang sah.";return;}
+    err.textContent="";$("salego").disabled=true;
+    adm({action:"addsale",code:$("salecode").value,product:$("saleprod").value,amount:amt,note:$("salenote").value}).then(function(r){
+      if(!r.ok){err.textContent=r.error||"Gagal.";return;}
+      $("saleamt").value="";$("salenote").value="";return loadAdmin();
+    }).catch(function(){err.textContent="Sambungan gagal.";}).then(function(){$("salego").disabled=false;});
   };
 })();
 </script>
